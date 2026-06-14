@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1c140d" />
+  <title>WoodForm — Carve. Sand. Satisfy.</title>
+  <meta name="description" content="WoodForm is a relaxing, skill-based wood-carving game. Mount a spinning log on the lathe, carve it into shape, sand it smooth, and earn your way to master craftsman." />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="game">
+    <canvas id="scene"></canvas>
+
+    <header id="topbar">
+      <div class="brand">Wood<span>Form</span></div>
+      <div class="stats">
+        <div class="stat level" id="statLevel">Lv 1</div>
+        <div class="xpbar"><div id="xpfill"></div></div>
+        <div class="stat coins">🪙 <span id="statCoins">0</span></div>
+      </div>
+    </header>
+
+    <!-- MENU -->
+    <section class="screen show" id="screen-menu">
+      <div class="panel menu-panel">
+        <h1 class="logo">Wood<span>Form</span></h1>
+        <p class="tag">Carve · Sand · Satisfy</p>
+        <div class="menu-buttons">
+          <button class="primary" data-action="career">▶&nbsp; Career</button>
+          <button data-action="workshop">🪵&nbsp; Workshop</button>
+          <button data-action="daily">📅&nbsp; Daily Order</button>
+          <button data-action="shop">🛒&nbsp; Shop</button>
+          <button data-action="howto">❔&nbsp; How to Play</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ORDER SELECT -->
+    <section class="screen" id="screen-orders">
+      <div class="panel wide">
+        <div class="panel-head"><h2>Career Contracts</h2><button class="ghost" data-action="menu">✕</button></div>
+        <p class="muted">Complete contracts to earn coins, level up and unlock tools, woods and harder commissions.</p>
+        <div id="orderList" class="card-grid"></div>
+      </div>
+    </section>
+
+    <!-- WOOD SELECT -->
+    <section class="screen" id="screen-wood">
+      <div class="panel">
+        <div class="panel-head"><h2>Select Your Wood</h2><button class="ghost" data-action="orders">← Back</button></div>
+        <div id="orderSummary" class="order-summary"></div>
+        <div id="woodList" class="card-grid small"></div>
+        <button class="primary big" id="startCarve">Mount Log &amp; Carve →</button>
+      </div>
+    </section>
+
+    <!-- CARVE HUD -->
+    <section class="screen carve-hud" id="screen-carve">
+      <div id="toolbar"></div>
+      <div id="orderTag">
+        <div class="ot-name">—</div>
+        <div class="ot-wood">—</div>
+      </div>
+      <div id="profileWrap">
+        <canvas id="profileGraph" width="248" height="120"></canvas>
+        <div class="profile-label"><span class="dot t"></span>target&nbsp;&nbsp;<span class="dot c"></span>carved</div>
+      </div>
+      <div id="carveBottom">
+        <button class="ghost" data-action="abandon">Abandon</button>
+        <div id="hint">Drag across the log to carve · aim toward the centreline to cut deeper · switch to sanding to finish</div>
+        <button class="primary" id="finishBtn">Finish ✓</button>
+      </div>
+    </section>
+
+    <!-- RESULT -->
+    <section class="screen" id="screen-result">
+      <div class="panel result-panel">
+        <div class="result-stars" id="resultStars">☆☆☆☆☆</div>
+        <h2 id="resultTitle">Finished!</h2>
+        <div class="big-score"><span id="resultScore">0</span><small>/100</small></div>
+        <div id="metricBars"></div>
+        <div class="reward-row">
+          <span class="reward coins">🪙 <b id="rewardCoins">+0</b></span>
+          <span class="reward xp"><b id="rewardXp">+0</b> XP</span>
+        </div>
+        <div id="unlockNote"></div>
+        <div class="result-buttons">
+          <button class="ghost" data-action="menu">Menu</button>
+          <button class="ghost" id="retryBtn">↺ Retry</button>
+          <button class="primary" id="nextBtn">Next ▶</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOP -->
+    <section class="screen" id="screen-shop">
+      <div class="panel wide">
+        <div class="panel-head"><h2>Workshop Shop</h2><button class="ghost" data-action="menu">✕</button></div>
+        <div class="shop-tabs">
+          <button class="tab active" data-tab="tools">🔧 Tools</button>
+          <button class="tab" data-tab="woods">🪵 Woods</button>
+        </div>
+        <div id="shopList" class="card-grid"></div>
+      </div>
+    </section>
+
+    <!-- HOW TO -->
+    <section class="screen" id="screen-howto">
+      <div class="panel">
+        <div class="panel-head"><h2>How to Play</h2><button class="ghost" data-action="menu">✕</button></div>
+        <ol class="howto">
+          <li><b>Mount a log.</b> Pick a contract and a wood, then start carving. The log spins on the lathe.</li>
+          <li><b>Carve to the green guide.</b> Drag across the spinning log. The closer to the centreline you aim, the deeper you cut. Watch the <b>target vs. carved</b> graph.</li>
+          <li><b>Pick the right tool.</b> A roughing gouge hogs bulk away; a parting tool cuts crisp grooves; a detail carver does fine work.</li>
+          <li><b>Don't overcut.</b> Cutting <i>below</i> the green line wastes wood and can't be undone — that's the skill.</li>
+          <li><b>Sand it smooth.</b> Switch to the sanding block and run it over the whole piece for a glassy finish.</li>
+          <li><b>Finish &amp; score.</b> You're graded on shape, smoothness, symmetry, efficiency, finish and time. Earn coins and level up.</li>
+        </ol>
+        <p class="muted">Tip: short, light passes give you the most control. Relax — there's no failing, only carving.</p>
+      </div>
+    </section>
+
+    <div id="toast"></div>
+    <button id="audioToggle" title="Toggle sound">🔊</button>
+    <div id="loading">Warming up the lathe…</div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
