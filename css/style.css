@@ -139,6 +139,16 @@ button.disabled { opacity: 0.4; pointer-events: none; }
 }
 #orderTag .ot-name { font-size: 18px; font-weight: 800; }
 #orderTag .ot-wood { font-size: 12px; color: var(--wood); letter-spacing: 1px; }
+.ot-match { font-size: 12px; color: #d8c6a4; margin-top: 3px; }
+.ot-match b { font-size: 14px; }
+
+#guideToggle.hud-toggle {
+  position: absolute; left: max(10px, env(safe-area-inset-left));
+  top: max(12px, env(safe-area-inset-top));
+  pointer-events: auto; z-index: 25; padding: 8px 12px; font-size: 12.5px;
+  background: rgba(28, 20, 13, 0.78); border: 1px solid var(--panel-edge); border-radius: 12px;
+}
+#guideToggle.hud-toggle.active { border-color: var(--green); color: #d6f2d8; background: rgba(125, 196, 128, 0.22); }
 
 #profileWrap {
   position: absolute; right: max(12px, env(safe-area-inset-right)); top: max(56px, env(safe-area-inset-top));

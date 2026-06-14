@@ -11,7 +11,7 @@ export const CONFIG = {
   SPIN_SPEED: 7.0,     // radians/sec visual spin
 
   // Carving feel
-  BASE_REMOVAL: 0.85,  // base radius removed per second at power 1, hardness 1
+  BASE_REMOVAL: 1.0,   // base radius removed per second at power 1, hardness 1
   CONTACT_TOL: 0.004,  // how far below the surface counts as "in contact"
 
   // Scoring tolerances (fractions of R0)

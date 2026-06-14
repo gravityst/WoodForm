@@ -38,7 +38,13 @@ Progress (coins, level, unlocks) is saved to your browser via `localStorage`.
 ## Features
 
 - 🪚 **Real lathe carving** — the log is a surface of revolution; tools remove
-  material live and the mesh deforms in real time.
+  material live and the mesh deforms in real time. A **depth-of-cut limit** means
+  you peel thin layers and can't slice straight through — you work the wood down
+  pass by pass, just like real turning.
+- 🟢 **Trace guide** — on easy/medium orders the target shape is drawn onto the
+  blank as a translucent green guide you carve down to (toggle any time). Easy
+  orders also stop you from over-cutting so you can learn the feel. A live
+  **Match %** readout shows how close you are.
 - 🌳 **8 woods** with distinct hardness, carve speed, value and grain (Pine →
   Spalted Maple), and **9 tools** from a basic chisel to a powered rotary cutter.
 - 🎯 **20 carving orders** across 4 tiers — goblets, vases, chess pieces,

@@ -57,6 +57,18 @@ export function scoreLog(log, elapsedSec) {
   };
 }
 
+// Quick shape-match readout (0-100) for the live HUD while carving.
+export function liveMatch(log) {
+  const S = log.S, r = log.radius, t = log.target, R0 = log.R0;
+  let n = 0, sum = 0;
+  for (let i = 0; i < S; i++) {
+    if (t[i] <= CONFIG.MIN_R * 1.4) continue;
+    n++; sum += Math.abs(r[i] - t[i]);
+  }
+  if (!n) return 0;
+  return clamp(Math.round(100 * (1 - (sum / n) / (CONFIG.SHAPE_TOL * R0))), 0, 100);
+}
+
 // Coin reward from a result. Scales with score, star bonus, the order's base
 // reward and the wood's value. A floor keeps even rough attempts worthwhile.
 export function rewardFor(order, wood, result) {

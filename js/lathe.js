@@ -17,6 +17,11 @@ export class Log {
     this.sanded = new Float32Array(S);   // 0..1 finish coverage per sample
     this.hasTarget = false;
     this.removedVolume = 0;
+    this.assistNoOvercut = false; // beginner guard: floor clamps to target
+    this.showGuide = false;       // draw the trace guide on the blank
+    this.ghostFill = null;
+    this.ghostWire = null;
+    this._ghostGeo = null;
 
     // precompute ring angle trig
     this.cos = new Float32Array(RS + 1);
@@ -161,6 +166,7 @@ export class Log {
     this.removedVolume = 0;
     this.markDirty(0, S - 1);
     this.updateGeometry();
+    this.updateGhost();
   }
 
   freeBlank() {
@@ -171,28 +177,40 @@ export class Log {
     this.removedVolume = 0;
     this.markDirty(0, this.S - 1);
     this.updateGeometry();
+    this.updateGhost();
   }
 
   // Cut material. `depth` is the target radius the tool tip is at. Returns the
   // amount of radius actually removed this step (0 = no contact) for FX/audio.
+  //
+  // A point can only be cut `maxStep` below the wood still supporting it (its
+  // taller neighbour, sampled from BEFORE this frame's cuts). That makes a deep
+  // shape take several peeling passes and makes it impossible to slice a thin
+  // line straight through the log — you must work the surrounding wood down too.
   carve(x, depth, tool, wood, dt) {
     const S = this.S, r = this.radius;
     const hw = tool.halfWidth;
     const i0 = this.indexAt(x);
     const span = Math.ceil(hw / this.dx);
     const rate = CONFIG.BASE_REMOVAL * tool.power * wood.carveSpeed * dt / wood.hardness;
+    const maxStep = tool.maxStep || 0.06;
+    const lo0 = Math.max(0, i0 - span - 1);
+    const hi0 = Math.min(S - 1, i0 + span + 1);
+    const snap = r.slice(lo0, hi0 + 1); // surface before this frame -> support
     let removed = 0, lo = i0, hi = i0;
     for (let i = Math.max(0, i0 - span); i <= Math.min(S - 1, i0 + span); i++) {
       const d = Math.abs(this.axialX(i) - x);
       if (d > hw) continue;
-      const floor = Math.max(CONFIG.MIN_R, depth + tool.shapeOffset(d, hw) * this.R0);
+      const li = i - lo0;
+      const support = Math.max(snap[Math.max(0, li - 1)], snap[Math.min(snap.length - 1, li + 1)]);
+      let floor = Math.max(CONFIG.MIN_R, depth + tool.shapeOffset(d, hw) * this.R0);
+      floor = Math.max(floor, support - maxStep);          // depth-of-cut limit
+      if (this.assistNoOvercut) floor = Math.max(floor, this.target[i]); // beginner guard
       if (r[i] <= floor + CONFIG.CONTACT_TOL) continue;
       const before = r[i];
-      // ease-in near the edges of the footprint for a softer cut
-      const edge = 1 - (d / hw) * 0.35;
+      const edge = 1 - (d / hw) * 0.35; // softer at the footprint edge
       r[i] = Math.max(floor, r[i] - rate * edge);
-      const dr = before - r[i];
-      removed += dr;
+      removed += before - r[i];
       this.sanded[i] *= 0.4; // a fresh cut roughens the surface again
       if (i < lo) lo = i; if (i > hi) hi = i;
     }
@@ -231,5 +249,70 @@ export class Log {
       if (this.target[i] > CONFIG.MIN_R * 1.5) { s += this.sanded[i]; n++; }
     }
     return n ? s / n : 0;
+  }
+
+  // ---- trace guide ("the object drawn on the blank") -----------------------
+  // A translucent fill + wireframe of the target shape, parented to the spinning
+  // mesh so it turns with the log. Carve the wood down until it meets the guide.
+  ensureGhost(fillMat, wireMat) {
+    if (this.ghostFill) return;
+    this._ghostGeo = this._makeRevolutionGeometry(this.target);
+    this.ghostFill = new THREE.Mesh(this._ghostGeo, fillMat);
+    this.ghostWire = new THREE.Mesh(this._ghostGeo, wireMat);
+    this.ghostFill.renderOrder = 2;
+    this.ghostWire.renderOrder = 3;
+    this.ghostFill.visible = this.ghostWire.visible = false;
+    if (this.mesh) { this.mesh.add(this.ghostFill); this.mesh.add(this.ghostWire); }
+  }
+
+  updateGhost() { if (this._ghostGeo) this._fillRevolution(this.target, this._ghostGeo); }
+
+  setGuideVisible(v) {
+    this.showGuide = v;
+    if (this.ghostFill) this.ghostFill.visible = v;
+    if (this.ghostWire) this.ghostWire.visible = v;
+  }
+
+  _makeRevolutionGeometry(radii) {
+    const S = this.S, RS = this.RS;
+    const ringVerts = S * (RS + 1), total = ringVerts + 2;
+    const geo = new THREE.BufferGeometry();
+    geo._pos = new Float32Array(total * 3);
+    geo._nor = new Float32Array(total * 3);
+    geo.setAttribute('position', new THREE.BufferAttribute(geo._pos, 3));
+    geo.setAttribute('normal', new THREE.BufferAttribute(geo._nor, 3));
+    const indices = [];
+    for (let i = 0; i < S - 1; i++)
+      for (let j = 0; j < RS; j++) {
+        const a = i * (RS + 1) + j, b = (i + 1) * (RS + 1) + j;
+        const c = (i + 1) * (RS + 1) + (j + 1), d = i * (RS + 1) + (j + 1);
+        indices.push(a, b, d, b, c, d);
+      }
+    const lc = ringVerts, rc = ringVerts + 1, base = (S - 1) * (RS + 1);
+    for (let j = 0; j < RS; j++) indices.push(lc, j + 1, j);
+    for (let j = 0; j < RS; j++) indices.push(rc, base + j, base + j + 1);
+    geo.setIndex(indices);
+    geo._lc = lc; geo._rc = rc;
+    this._fillRevolution(radii, geo);
+    return geo;
+  }
+
+  _fillRevolution(radii, geo) {
+    const S = this.S, RS = this.RS, pos = geo._pos, nor = geo._nor;
+    for (let i = 0; i < S; i++) {
+      const x = this.axialX(i), ri = radii[i];
+      const slope = (radii[Math.min(S - 1, i + 1)] - radii[Math.max(0, i - 1)]) / (2 * this.dx);
+      const nx = -slope, inv = 1 / Math.hypot(nx, 1);
+      for (let j = 0; j <= RS; j++) {
+        const idx = (i * (RS + 1) + j) * 3, cj = this.cos[j], sj = this.sin[j];
+        pos[idx] = x; pos[idx + 1] = ri * cj; pos[idx + 2] = ri * sj;
+        nor[idx] = nx * inv; nor[idx + 1] = cj * inv; nor[idx + 2] = sj * inv;
+      }
+    }
+    pos[geo._lc * 3] = -this.L / 2; nor[geo._lc * 3] = -1;
+    pos[geo._rc * 3] = this.L / 2; nor[geo._rc * 3] = 1;
+    geo.attributes.position.needsUpdate = true;
+    geo.attributes.normal.needsUpdate = true;
+    geo.computeBoundingSphere();
   }
 }

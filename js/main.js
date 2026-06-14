@@ -4,7 +4,7 @@ import { WOODS, WOOD_BY_ID } from './woods.js';
 import { TOOLS, TOOL_BY_ID } from './tools.js';
 import { ORDERS, ORDER_BY_ID } from './orders.js';
 import { Log } from './lathe.js';
-import { scoreLog, rewardFor } from './scoring.js';
+import { scoreLog, rewardFor, liveMatch } from './scoring.js';
 import { Shavings } from './particles.js';
 import { AudioEngine } from './audio.js';
 import { Save } from './save.js';
@@ -82,6 +82,16 @@ function initScene() {
   const mesh = log.setMaterials(woodMat, capMat);
   scene.add(mesh);
   applyWood(state.wood);
+
+  // trace-guide ("object drawn on the blank") materials + meshes
+  const ghostFill = new THREE.MeshBasicMaterial({
+    color: 0x7dc480, transparent: true, opacity: 0.28,
+    depthWrite: false, side: THREE.DoubleSide,
+  });
+  const ghostWire = new THREE.MeshBasicMaterial({
+    color: 0xa6f0aa, wireframe: true, transparent: true, opacity: 0.35, depthTest: false,
+  });
+  log.ensureGhost(ghostFill, ghostWire);
 
   shavings = new Shavings(scene);
 
@@ -238,7 +248,7 @@ function applyCarve(dt) {
   if (isSand) {
     work = log.sand(x, tool, wood, dt);
     audio.carve(Math.min(1, work * 4 + 0.15), true);
-    if (work > 0 && Math.random() < 0.5) spawnFx(x, i, wood.shaving, 0.25);
+    if (work > 0) { if (Math.random() < 0.5) spawnFx(x, i, wood.shaving, 0.25); pulse(0.3); }
   } else {
     const removed = log.carve(x, depth, tool, wood, dt);
     work = removed;
@@ -246,6 +256,7 @@ function applyCarve(dt) {
       const intensity = Math.min(1, removed * 45);
       audio.carve(0.3 + intensity * 0.7, false);
       spawnFx(x, i, wood.shaving, intensity);
+      pulse(intensity);
     } else {
       audio.carve(0.0, false);
     }
@@ -263,6 +274,15 @@ function spawnFx(x, i, color, intensity) {
   shavings.spawn(hitPoint, color, intensity);
 }
 
+let _lastVibe = 0;
+function pulse(strength) {
+  if (!navigator.vibrate) return;          // iOS Safari has no vibrate; harmless
+  const now = performance.now();
+  if (now - _lastVibe < 70) return;
+  _lastVibe = now;
+  navigator.vibrate(Math.round(Math.max(4, Math.min(16, strength * 16))));
+}
+
 // ---------------------------------------------------------------------------
 // Render loop
 // ---------------------------------------------------------------------------
@@ -278,8 +298,15 @@ function animate(now) {
   shavings.update(dt);
 
   if (state.screen === 'carve') {
-    const pg = document.getElementById('profileGraph');
-    drawProfileGraph(pg, log);
+    drawProfileGraph(document.getElementById('profileGraph'), log);
+    const mr = document.getElementById('matchReadout');
+    if (state.order) {
+      mr.style.display = '';
+      const m = liveMatch(log);
+      const mv = document.getElementById('matchVal');
+      mv.textContent = m + '%';
+      mv.style.color = m >= 85 ? '#7dc480' : m >= 60 ? '#e8cd96' : '#d9a06a';
+    } else { mr.style.display = 'none'; }
   }
 
   renderer.render(scene, camera);
@@ -309,6 +336,11 @@ function startOrder(order, wood, mode) {
   state.order = order; state.mode = mode; applyWood(wood);
   log.applyOrder(order);
   log.mesh.rotation.x = 0;
+  // difficulty assists: tier 1 (easy) = trace guide + can't over-cut past the
+  // target; tier 2 (medium) = trace guide only; tier 3-4 = no help.
+  log.assistNoOvercut = order.tier === 1;
+  log.setGuideVisible(order.tier <= 2);
+  updateGuideToggle();
   buildToolbar();
   // default to a sensible starting tool the player owns
   const startTool = order.tools.find(t => save.hasTool(t)) || 'chisel';
@@ -324,6 +356,9 @@ function startWorkshop(wood) {
   state.order = null; state.mode = 'workshop'; applyWood(wood);
   log.freeBlank();
   log.mesh.rotation.x = 0;
+  log.assistNoOvercut = false;
+  log.setGuideVisible(false);
+  updateGuideToggle();
   buildToolbar();
   selectTool(save.hasTool('roughing') ? 'roughing' : 'chisel');
   document.querySelector('#orderTag .ot-name').textContent = 'Free Carving';
@@ -404,6 +439,13 @@ function selectTool(id) {
   state.tool = TOOL_BY_ID[id];
   document.querySelectorAll('#toolbar .toolbtn').forEach(b =>
     b.classList.toggle('active', b.dataset.tool === id));
+}
+
+function updateGuideToggle() {
+  const b = document.getElementById('guideToggle');
+  if (!b) return;
+  b.classList.toggle('active', log.showGuide);
+  b.textContent = log.showGuide ? '👁 Trace: On' : '👁 Trace: Off';
 }
 
 function buildOrderList() {
@@ -531,6 +573,9 @@ function wireUI() {
   });
 
   document.getElementById('finishBtn').onclick = () => { audio.click(); finishCarve(); };
+  document.getElementById('guideToggle').onclick = () => {
+    audio.click(); log.setGuideVisible(!log.showGuide); updateGuideToggle();
+  };
   document.getElementById('retryBtn').onclick = () => { audio.click(); startOrder(state.order, state.wood, state.mode === 'daily' ? 'daily' : 'career'); };
   document.getElementById('nextBtn').onclick = () => { audio.click(); nextOrder(); };
 

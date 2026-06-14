@@ -65,9 +65,11 @@
     <!-- CARVE HUD -->
     <section class="screen carve-hud" id="screen-carve">
       <div id="toolbar"></div>
+      <button id="guideToggle" class="hud-toggle">👁 Trace: On</button>
       <div id="orderTag">
         <div class="ot-name">—</div>
         <div class="ot-wood">—</div>
+        <div class="ot-match" id="matchReadout">Match <b id="matchVal">0%</b></div>
       </div>
       <div id="profileWrap">
         <canvas id="profileGraph" width="248" height="120"></canvas>
@@ -75,7 +77,7 @@
       </div>
       <div id="carveBottom">
         <button class="ghost" data-action="abandon">Abandon</button>
-        <div id="hint">Drag across the log to carve · aim toward the centreline to cut deeper · switch to sanding to finish</div>
+        <div id="hint">Drag across the log in light passes to peel the wood down to the green guide · aim toward the centreline to cut deeper · then sand to finish</div>
         <button class="primary" id="finishBtn">Finish ✓</button>
       </div>
     </section>
