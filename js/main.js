@@ -1,14 +1,14 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js';
-import { WOODS, WOOD_BY_ID } from './woods.js';
-import { TOOLS, TOOL_BY_ID } from './tools.js';
-import { ORDERS, ORDER_BY_ID } from './orders.js';
-import { Log } from './lathe.js';
-import { scoreLog, rewardFor, liveMatch } from './scoring.js';
-import { Shavings } from './particles.js';
-import { AudioEngine } from './audio.js';
-import { Save } from './save.js';
-import { drawProfileGraph, toast, stars } from './ui.js';
+import { CONFIG } from './config.js?v=8';
+import { WOODS, WOOD_BY_ID } from './woods.js?v=8';
+import { TOOLS, TOOL_BY_ID } from './tools.js?v=8';
+import { ORDERS, ORDER_BY_ID } from './orders.js?v=8';
+import { Log } from './lathe.js?v=8';
+import { scoreLog, rewardFor, liveMatch } from './scoring.js?v=8';
+import { Shavings } from './particles.js?v=8';
+import { AudioEngine } from './audio.js?v=8';
+import { Save } from './save.js?v=8';
+import { drawProfileGraph, toast, stars } from './ui.js?v=8';
 
 // ---------------------------------------------------------------------------
 // State
