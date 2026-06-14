@@ -1,14 +1,14 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js?v=8';
-import { WOODS, WOOD_BY_ID } from './woods.js?v=8';
-import { TOOLS, TOOL_BY_ID } from './tools.js?v=8';
-import { ORDERS, ORDER_BY_ID } from './orders.js?v=8';
-import { Log } from './lathe.js?v=8';
-import { scoreLog, rewardFor, liveMatch } from './scoring.js?v=8';
-import { Shavings } from './particles.js?v=8';
-import { AudioEngine } from './audio.js?v=8';
-import { Save } from './save.js?v=8';
-import { drawProfileGraph, toast, stars } from './ui.js?v=8';
+import { CONFIG } from './config.js?v=9';
+import { WOODS, WOOD_BY_ID } from './woods.js?v=9';
+import { TOOLS, TOOL_BY_ID } from './tools.js?v=9';
+import { ORDERS, ORDER_BY_ID } from './orders.js?v=9';
+import { Log } from './lathe.js?v=9';
+import { scoreLog, rewardFor, liveMatch } from './scoring.js?v=9';
+import { Shavings } from './particles.js?v=9';
+import { AudioEngine } from './audio.js?v=9';
+import { Save } from './save.js?v=9';
+import { drawProfileGraph, toast, stars } from './ui.js?v=9';
 
 // ---------------------------------------------------------------------------
 // State
@@ -90,9 +90,9 @@ function initScene() {
 
   shavings = new Shavings(scene);
 
-  // tool marker
+  // tool marker — a small sharp tip that touches the log exactly where it cuts
   const tm = new THREE.Mesh(
-    new THREE.ConeGeometry(0.045, 0.22, 16),
+    new THREE.ConeGeometry(0.016, 0.13, 14),
     new THREE.MeshStandardMaterial({ color: 0xcfd6db, metalness: 0.7, roughness: 0.35 })
   );
   tm.rotation.z = Math.PI;       // point downward
@@ -101,6 +101,7 @@ function initScene() {
   scene.add(tm);
 
   window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', () => setTimeout(onResize, 250));
   onResize();
 }
 
@@ -201,6 +202,24 @@ function onResize() {
   renderer.setSize(w, h);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  frameCamera();
+  // surface a "rotate to landscape" hint on tall/narrow screens
+  const rh = document.getElementById('rotateHint');
+  if (rh) rh.classList.toggle('show', state.screen === 'carve' && h > w * 1.05);
+}
+
+// Pull the camera back far enough that the whole log fits, whatever the aspect
+// ratio / orientation — so it works on phones in portrait and landscape.
+function frameCamera() {
+  if (!camera) return;
+  const tanV = Math.tan(camera.fov * Math.PI / 360);
+  const halfLen = CONFIG.LENGTH / 2 + 0.5;          // length + handle margin
+  const maxR = CONFIG.R0 + 0.45;                     // radius + vertical margin
+  const distH = halfLen / (tanV * camera.aspect);    // fit length horizontally
+  const distV = maxR / tanV;                          // fit radius vertically
+  const dist = Math.min(11, Math.max(distH, distV, 2.6));
+  camera.position.set(0, dist * 0.16, dist);
+  camera.lookAt(0, 0, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -263,9 +282,9 @@ function applyCarve(dt) {
     }
   }
 
-  // tool marker sits just off the contact point
+  // tool marker tip sits right on the contact point
   toolMarker.visible = true;
-  toolMarker.position.set(x, log.radius[i] + 0.12, 0);
+  toolMarker.position.set(x, log.radius[i] + 0.065, 0);
   toolMarker.material.color.setHex(tool.color);
 }
 
@@ -318,6 +337,8 @@ function showScreen(name) {
   document.getElementById('topbar').style.display = (name === 'carve') ? 'none' : '';
   audio.hum(name === 'carve');
   if (name !== 'carve') { state.carving = false; audio.stopCarve(); toolMarker.visible = false; }
+  const rh = document.getElementById('rotateHint');
+  if (rh) rh.classList.toggle('show', name === 'carve' && innerHeight > innerWidth * 1.05);
 }
 
 function updateTopbar() {

@@ -1,8 +1,8 @@
 // WoodForm — global tunables. Kept in one place so balancing is easy.
 export const CONFIG = {
   // Log geometry (a surface of revolution sampled along its length).
-  SAMPLES: 200,        // radius samples along the length axis (X)
-  RADIAL_SEGMENTS: 48, // facets around the axis (purely visual)
+  SAMPLES: 320,        // radius samples along the length axis (X) — finer = sharper cuts
+  RADIAL_SEGMENTS: 44, // facets around the axis (purely visual)
   LENGTH: 2.6,         // world length of the log
   R0: 0.52,            // starting (cylinder) radius
   MIN_R: 0.05,         // mandrel/core radius — cannot cut below this

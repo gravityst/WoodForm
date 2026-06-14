@@ -1,4 +1,4 @@
-import { CONFIG, starsFor } from './config.js?v=8';
+import { CONFIG, starsFor } from './config.js?v=9';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const pct = (x) => clamp(Math.round(x * 100), 0, 100);
