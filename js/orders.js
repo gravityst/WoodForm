@@ -142,8 +142,8 @@ const shapes = {
 
 // --- order catalogue ----------------------------------------------------------
 export const ORDERS = [
-  { id: 'rolling_pin', name: 'Rolling Pin', tier: 1, minLevel: 1, baseReward: 60,
-    blurb: 'A baker wants a classic rolling pin with slim handles.',
+  { id: 'rolling_pin', name: 'Rolling Pin', tier: 1, minLevel: 1, baseReward: 60, tutorial: true,
+    blurb: 'A baker wants a classic rolling pin with slim handles. (Tutorial: the tool won\'t let you over-cut.)',
     tools: ['roughing', 'chisel', 'sandblock'], profile: shapes.rollingPin },
   { id: 'bowl', name: 'Salad Bowl', tier: 1, minLevel: 1, baseReward: 70,
     blurb: 'A wide, gently flaring bowl with a small foot.',

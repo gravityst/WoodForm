@@ -331,9 +331,10 @@ function startOrder(order, wood, mode) {
   state.order = order; state.mode = mode; applyWood(wood);
   log.applyOrder(order);
   log.mesh.rotation.x = 0;
-  // difficulty assists: tier 1 (easy) = trace guide + can't over-cut past the
-  // target; tier 2 (medium) = trace guide only; tier 3-4 = no help.
-  log.assistNoOvercut = order.tier === 1;
+  // Only the tutorial order stops you over-cutting; everywhere else you CAN cut
+  // past the line (and get penalised) — that's the skill. Trace guide shows on
+  // easy/medium (toggle any time).
+  log.assistNoOvercut = !!order.tutorial;
   log.setGuideVisible(order.tier <= 2);
   updateGuideToggle();
   buildToolbar();
