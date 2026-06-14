@@ -1,6 +1,6 @@
-import { CONFIG, xpForLevel } from './config.js?v=9';
-import { WOODS } from './woods.js?v=9';
-import { TOOLS } from './tools.js?v=9';
+import { CONFIG, xpForLevel } from './config.js?v=10';
+import { WOODS } from './woods.js?v=10';
+import { TOOLS } from './tools.js?v=10';
 
 const KEY = 'woodform.save.v1';
 

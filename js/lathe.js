@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CONFIG } from './config.js?v=9';
+import { CONFIG } from './config.js?v=10';
 
 // The log is a surface of revolution about the X axis: a radius value at each of
 // SAMPLES positions along the length. Carving lowers radii toward a target depth;
