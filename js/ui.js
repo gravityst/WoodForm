@@ -40,6 +40,21 @@ export function drawProfileGraph(canvas, log) {
   ctx.strokeStyle = 'rgba(232,205,150,0.95)';
   ctx.lineWidth = 1.5;
   ctx.stroke();
+
+  // warn in red wherever you've cut BELOW the target (over-cut, unrecoverable)
+  if (log.hasTarget) {
+    ctx.strokeStyle = 'rgba(232,90,70,0.95)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let drawing = false;
+    for (let i = 0; i < S; i++) {
+      const under = log.radius[i] < log.target[i] - R0 * 0.012 && log.target[i] > R0 * 0.14;
+      const x = pad + i * sx, y = midY - log.radius[i] * sy;
+      if (under) { drawing ? ctx.lineTo(x, y) : ctx.moveTo(x, y); drawing = true; }
+      else if (drawing) { ctx.stroke(); ctx.beginPath(); drawing = false; }
+    }
+    if (drawing) ctx.stroke();
+  }
 }
 
 let toastTimer = null;
