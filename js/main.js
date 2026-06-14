@@ -31,9 +31,7 @@ const state = {
   shopTab: 'tools',
 };
 
-const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0); // z = 0
 const raycaster = new THREE.Raycaster();
-const hitPoint = new THREE.Vector3();
 let lastT = 0;
 
 // ---------------------------------------------------------------------------
@@ -83,15 +81,12 @@ function initScene() {
   scene.add(mesh);
   applyWood(state.wood);
 
-  // trace-guide ("object drawn on the blank") materials + meshes
-  const ghostFill = new THREE.MeshBasicMaterial({
-    color: 0x7dc480, transparent: true, opacity: 0.28,
-    depthWrite: false, side: THREE.DoubleSide,
+  // trace guide: a thin yellow outline of the target shape drawn over the log
+  const guideMat = new THREE.LineBasicMaterial({
+    color: 0xffd23f, transparent: true, opacity: 0.95, depthTest: false,
   });
-  const ghostWire = new THREE.MeshBasicMaterial({
-    color: 0xa6f0aa, wireframe: true, transparent: true, opacity: 0.35, depthTest: false,
-  });
-  log.ensureGhost(ghostFill, ghostWire);
+  log.ensureGuide(guideMat);
+  scene.add(log.guideTop, log.guideBot);
 
   shavings = new Shavings(scene);
 
@@ -235,43 +230,43 @@ function setupPointer() {
 function applyCarve(dt) {
   if (!(state.screen === 'carve' && state.carving)) { audio.stopCarve(); return; }
   raycaster.setFromCamera(state.ndc, camera);
-  const hit = raycaster.ray.intersectPlane(plane, hitPoint);
-  if (!hit || Math.abs(hitPoint.x) > CONFIG.LENGTH / 2 || Math.abs(hitPoint.y) > CONFIG.R0 * 1.3) {
-    audio.stopCarve(); toolMarker.visible = false; return;
-  }
-  const x = hitPoint.x;
-  const depth = Math.min(CONFIG.R0, Math.max(CONFIG.MIN_R, Math.abs(hitPoint.y)));
+  // Axial position comes from the ACTUAL wood surface under the pointer, so the
+  // cut lands exactly where you touch (no plane-projection parallax).
+  const hits = raycaster.intersectObject(log.mesh, false);
+  if (!hits.length) { audio.stopCarve(); audio.carve(0, false); toolMarker.visible = false; return; }
+  const hp = hits[0].point;
+  const x = Math.min(CONFIG.LENGTH / 2, Math.max(-CONFIG.LENGTH / 2, hp.x));
   const i = log.indexAt(x);
+  // Depth = the ray's closest approach to the lathe (X) axis: aim toward the
+  // centreline to cut deeper. This is independent of x, so it adds no parallax.
+  const O = raycaster.ray.origin, D = raycaster.ray.direction;
+  const t = -(O.y * D.y + O.z * D.z) / (D.y * D.y + D.z * D.z);
+  const depth = Math.min(CONFIG.R0, Math.max(CONFIG.MIN_R,
+    Math.hypot(O.y + t * D.y, O.z + t * D.z)));
   const tool = state.tool, wood = state.wood;
 
   let work = 0, isSand = tool.kind === 'sand';
   if (isSand) {
     work = log.sand(x, tool, wood, dt);
     audio.carve(Math.min(1, work * 4 + 0.15), true);
-    if (work > 0) { if (Math.random() < 0.5) spawnFx(x, i, wood.shaving, 0.25); pulse(0.3); }
+    if (work > 0) { if (Math.random() < 0.5) shavings.spawn(hp, wood.shaving, 0.25); pulse(0.3); }
   } else {
     const removed = log.carve(x, depth, tool, wood, dt);
     work = removed;
     if (removed > 0) {
       const intensity = Math.min(1, removed * 45);
       audio.carve(0.3 + intensity * 0.7, false);
-      spawnFx(x, i, wood.shaving, intensity);
+      shavings.spawn(hp, wood.shaving, intensity);
       pulse(intensity);
     } else {
       audio.carve(0.0, false);
     }
   }
 
-  // place the tool marker at the contact, above the current surface
-  const top = Math.max(depth, log.radius[i]);
+  // tool marker sits just off the contact point
   toolMarker.visible = true;
-  toolMarker.position.set(x, top + 0.12, 0);
+  toolMarker.position.set(x, log.radius[i] + 0.12, 0);
   toolMarker.material.color.setHex(tool.color);
-}
-
-function spawnFx(x, i, color, intensity) {
-  hitPoint.set(x, log.radius[i], 0);
-  shavings.spawn(hitPoint, color, intensity);
 }
 
 let _lastVibe = 0;

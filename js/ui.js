@@ -23,9 +23,9 @@ export function drawProfileGraph(canvas, log) {
     for (let i = 0; i < S; i++) { const x = pad + i * sx; const y = midY - log.target[i] * sy; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
     for (let i = S - 1; i >= 0; i--) { const x = pad + i * sx; const y = midY + log.target[i] * sy; ctx.lineTo(x, y); }
     ctx.closePath();
-    ctx.fillStyle = 'rgba(125,196,128,0.18)';
+    ctx.fillStyle = 'rgba(255,210,63,0.16)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(125,196,128,0.7)';
+    ctx.strokeStyle = 'rgba(255,210,63,0.8)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }

@@ -22,9 +22,9 @@ Works on desktop and mobile. Best with sound on.
 ## How to play
 
 1. **Pick a contract and a wood**, then mount the log. It spins on the lathe.
-2. **Carve to the green guide.** Drag across the spinning log — the closer you
-   aim to the centreline, the deeper you cut. Watch the *target vs. carved*
-   profile graph.
+2. **Carve to the yellow guide line.** The target outline is drawn on the blank.
+   Drag across the spinning log — the closer you aim to the centreline, the
+   deeper you cut. Watch the *target vs. carved* profile graph.
 3. **Choose the right tool.** A roughing gouge hogs away bulk, a parting tool
    cuts crisp grooves, a detail carver does fine work.
 4. **Don't overcut.** Cutting *below* the green line wastes wood and can't be
@@ -41,10 +41,10 @@ Progress (coins, level, unlocks) is saved to your browser via `localStorage`.
   material live and the mesh deforms in real time. A **depth-of-cut limit** means
   you peel thin layers and can't slice straight through — you work the wood down
   pass by pass, just like real turning.
-- 🟢 **Trace guide** — on easy/medium orders the target shape is drawn onto the
-  blank as a translucent green guide you carve down to (toggle any time). Easy
-  orders also stop you from over-cutting so you can learn the feel. A live
-  **Match %** readout shows how close you are.
+- 🟡 **Trace guide** — on easy/medium orders the target outline is drawn onto the
+  blank as a thin yellow line you carve down to (toggle any time). Easy orders
+  also stop you from over-cutting so you can learn the feel. A live **Match %**
+  readout shows how close you are.
 - 🌳 **8 woods** with distinct hardness, carve speed, value and grain (Pine →
   Spalted Maple), and **9 tools** from a basic chisel to a powered rotary cutter.
 - 🎯 **20 carving orders** across 4 tiers — goblets, vases, chess pieces,

@@ -19,9 +19,8 @@ export class Log {
     this.removedVolume = 0;
     this.assistNoOvercut = false; // beginner guard: floor clamps to target
     this.showGuide = false;       // draw the trace guide on the blank
-    this.ghostFill = null;
-    this.ghostWire = null;
-    this._ghostGeo = null;
+    this.guideTop = null;         // yellow target-outline lines
+    this.guideBot = null;
 
     // precompute ring angle trig
     this.cos = new Float32Array(RS + 1);
@@ -166,7 +165,7 @@ export class Log {
     this.removedVolume = 0;
     this.markDirty(0, S - 1);
     this.updateGeometry();
-    this.updateGhost();
+    this.updateGuide();
   }
 
   freeBlank() {
@@ -177,7 +176,7 @@ export class Log {
     this.removedVolume = 0;
     this.markDirty(0, this.S - 1);
     this.updateGeometry();
-    this.updateGhost();
+    this.updateGuide();
   }
 
   // Cut material. `depth` is the target radius the tool tip is at. Returns the
@@ -251,68 +250,46 @@ export class Log {
     return n ? s / n : 0;
   }
 
-  // ---- trace guide ("the object drawn on the blank") -----------------------
-  // A translucent fill + wireframe of the target shape, parented to the spinning
-  // mesh so it turns with the log. Carve the wood down until it meets the guide.
-  ensureGhost(fillMat, wireMat) {
-    if (this.ghostFill) return;
-    this._ghostGeo = this._makeRevolutionGeometry(this.target);
-    this.ghostFill = new THREE.Mesh(this._ghostGeo, fillMat);
-    this.ghostWire = new THREE.Mesh(this._ghostGeo, wireMat);
-    this.ghostFill.renderOrder = 2;
-    this.ghostWire.renderOrder = 3;
-    this.ghostFill.visible = this.ghostWire.visible = false;
-    if (this.mesh) { this.mesh.add(this.ghostFill); this.mesh.add(this.ghostWire); }
+  // ---- trace guide: a thin yellow outline of the target silhouette ---------
+  // Two lines (top + mirrored bottom) following the target radius along the
+  // length, drawn over the log (depthTest off) so you can trace the shape
+  // without hiding the wood or your actual cut. NOT parented to the spinning
+  // mesh — it stays a fixed front-facing silhouette.
+  ensureGuide(material) {
+    if (this.guideTop) return;
+    const mk = (sign) => {
+      const pos = new Float32Array(this.S * 3);
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const line = new THREE.Line(g, material);
+      line.frustumCulled = false;
+      line.renderOrder = 6;
+      line.visible = false;
+      line._sign = sign; line._pos = pos;
+      return line;
+    };
+    this.guideTop = mk(1);
+    this.guideBot = mk(-1);
+    this.updateGuide();
   }
 
-  updateGhost() { if (this._ghostGeo) this._fillRevolution(this.target, this._ghostGeo); }
+  updateGuide() {
+    for (const line of [this.guideTop, this.guideBot]) {
+      if (!line) continue;
+      const pos = line._pos;
+      for (let i = 0; i < this.S; i++) {
+        pos[i * 3] = this.axialX(i);
+        pos[i * 3 + 1] = line._sign * this.target[i];
+        pos[i * 3 + 2] = 0;
+      }
+      line.geometry.attributes.position.needsUpdate = true;
+      line.geometry.computeBoundingSphere();
+    }
+  }
 
   setGuideVisible(v) {
     this.showGuide = v;
-    if (this.ghostFill) this.ghostFill.visible = v;
-    if (this.ghostWire) this.ghostWire.visible = v;
-  }
-
-  _makeRevolutionGeometry(radii) {
-    const S = this.S, RS = this.RS;
-    const ringVerts = S * (RS + 1), total = ringVerts + 2;
-    const geo = new THREE.BufferGeometry();
-    geo._pos = new Float32Array(total * 3);
-    geo._nor = new Float32Array(total * 3);
-    geo.setAttribute('position', new THREE.BufferAttribute(geo._pos, 3));
-    geo.setAttribute('normal', new THREE.BufferAttribute(geo._nor, 3));
-    const indices = [];
-    for (let i = 0; i < S - 1; i++)
-      for (let j = 0; j < RS; j++) {
-        const a = i * (RS + 1) + j, b = (i + 1) * (RS + 1) + j;
-        const c = (i + 1) * (RS + 1) + (j + 1), d = i * (RS + 1) + (j + 1);
-        indices.push(a, b, d, b, c, d);
-      }
-    const lc = ringVerts, rc = ringVerts + 1, base = (S - 1) * (RS + 1);
-    for (let j = 0; j < RS; j++) indices.push(lc, j + 1, j);
-    for (let j = 0; j < RS; j++) indices.push(rc, base + j, base + j + 1);
-    geo.setIndex(indices);
-    geo._lc = lc; geo._rc = rc;
-    this._fillRevolution(radii, geo);
-    return geo;
-  }
-
-  _fillRevolution(radii, geo) {
-    const S = this.S, RS = this.RS, pos = geo._pos, nor = geo._nor;
-    for (let i = 0; i < S; i++) {
-      const x = this.axialX(i), ri = radii[i];
-      const slope = (radii[Math.min(S - 1, i + 1)] - radii[Math.max(0, i - 1)]) / (2 * this.dx);
-      const nx = -slope, inv = 1 / Math.hypot(nx, 1);
-      for (let j = 0; j <= RS; j++) {
-        const idx = (i * (RS + 1) + j) * 3, cj = this.cos[j], sj = this.sin[j];
-        pos[idx] = x; pos[idx + 1] = ri * cj; pos[idx + 2] = ri * sj;
-        nor[idx] = nx * inv; nor[idx + 1] = cj * inv; nor[idx + 2] = sj * inv;
-      }
-    }
-    pos[geo._lc * 3] = -this.L / 2; nor[geo._lc * 3] = -1;
-    pos[geo._rc * 3] = this.L / 2; nor[geo._rc * 3] = 1;
-    geo.attributes.position.needsUpdate = true;
-    geo.attributes.normal.needsUpdate = true;
-    geo.computeBoundingSphere();
+    if (this.guideTop) this.guideTop.visible = v;
+    if (this.guideBot) this.guideBot.visible = v;
   }
 }
