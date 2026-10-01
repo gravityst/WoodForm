@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#1c140d" />
+  <meta name="theme-color" content="#2a2119" />
   <title>WoodForm — Carve. Sand. Satisfy.</title>
   <meta name="description" content="WoodForm is a relaxing, skill-based wood-carving game. Mount a spinning log on the lathe, carve it into shape, sand it smooth, and earn your way to master craftsman." />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&display=swap" />
+  <link rel="stylesheet" href="css/style.css?v=11" />
   <script type="importmap">
   {
     "imports": {
@@ -18,36 +21,36 @@
 <body>
   <div id="game">
     <canvas id="scene"></canvas>
+    <div id="vignette"></div>
 
     <header id="topbar">
-      <div class="brand">Wood<span>Form</span></div>
+      <div class="brand">WoodForm</div>
       <div class="stats">
-        <div class="stat level" id="statLevel">Lv 1</div>
-        <div class="xpbar"><div id="xpfill"></div></div>
-        <div class="stat coins">🪙 <span id="statCoins">0</span></div>
+        <div class="stat level"><span id="statLevel">Level 1</span><div class="xpbar"><div id="xpfill"></div></div></div>
+        <div class="stat coins"><i class="coin"></i><span id="statCoins">0</span></div>
       </div>
     </header>
 
     <!-- MENU -->
     <section class="screen show" id="screen-menu">
       <div class="panel menu-panel">
-        <h1 class="logo">Wood<span>Form</span></h1>
-        <p class="tag">Carve · Sand · Satisfy</p>
-        <div class="menu-buttons">
-          <button class="primary" data-action="career">▶&nbsp; Career</button>
-          <button data-action="workshop">🪵&nbsp; Workshop</button>
-          <button data-action="daily">📅&nbsp; Daily Order</button>
-          <button data-action="shop">🛒&nbsp; Shop</button>
-          <button data-action="howto">❔&nbsp; How to Play</button>
-        </div>
+        <h1 class="logo">WoodForm</h1>
+        <p class="tag">A quiet afternoon at the lathe.</p>
+        <button class="primary big" data-action="career">Start turning</button>
+        <nav class="menu-list">
+          <button data-action="workshop"><span>Free turning</span><small>Any wood, no order</small></button>
+          <button data-action="daily"><span>Daily order</span><small id="dailyName">A new piece every day</small></button>
+          <button data-action="shop"><span>Tool shop</span><small>Tools and timber</small></button>
+          <button data-action="howto"><span>How to play</span><small>Six steps</small></button>
+        </nav>
       </div>
     </section>
 
     <!-- ORDER SELECT -->
     <section class="screen" id="screen-orders">
       <div class="panel wide">
-        <div class="panel-head"><h2>Career Contracts</h2><button class="ghost" data-action="menu">✕</button></div>
-        <p class="muted">Complete contracts to earn coins, level up and unlock tools, woods and harder commissions.</p>
+        <div class="panel-head"><h2>Orders</h2><button class="ghost icon-btn" data-action="menu" aria-label="Close"></button></div>
+        <p class="muted">Turn each piece to its drawing. Finished orders pay coins and experience, and unlock tools, timber and harder work.</p>
         <div id="orderList" class="card-grid"></div>
       </div>
     </section>
@@ -55,50 +58,50 @@
     <!-- WOOD SELECT -->
     <section class="screen" id="screen-wood">
       <div class="panel">
-        <div class="panel-head"><h2>Select Your Wood</h2><button class="ghost" data-action="orders">← Back</button></div>
+        <div class="panel-head"><h2>Choose the timber</h2><button class="ghost icon-btn back" data-action="orders" aria-label="Back"></button></div>
         <div id="orderSummary" class="order-summary"></div>
         <div id="woodList" class="card-grid small"></div>
-        <button class="primary big" id="startCarve">Mount Log &amp; Carve →</button>
+        <button class="primary big" id="startCarve">Mount the blank</button>
       </div>
     </section>
 
     <!-- CARVE HUD -->
     <section class="screen carve-hud" id="screen-carve">
-      <div id="toolbar"></div>
-      <button id="guideToggle" class="hud-toggle">👁 Trace: On</button>
       <div id="orderTag">
         <div class="ot-name">—</div>
         <div class="ot-wood">—</div>
-        <div class="ot-match" id="matchReadout">Match <b id="matchVal">0%</b></div>
+        <div class="ot-match" id="matchReadout"><div class="meter"><i id="matchBar"></i></div><span>Match <b id="matchVal">0%</b></span></div>
       </div>
+      <div id="toolbar"></div>
       <div id="profileWrap">
-        <canvas id="profileGraph" width="248" height="120"></canvas>
-        <div class="profile-label"><span class="dot t"></span>target&nbsp;&nbsp;<span class="dot c"></span>carved</div>
+        <canvas id="profileGraph" width="496" height="240"></canvas>
+        <div class="profile-label"><span class="key t"></span>drawing<span class="key c"></span>your piece</div>
       </div>
       <div id="carveBottom">
-        <button class="ghost" data-action="abandon">☰ Menu</button>
-        <div id="hint">Drag across the log in light passes to peel the wood down to the yellow guide line · aim toward the centreline to cut deeper · then sand to finish</div>
-        <button class="primary" id="finishBtn">Finish ✓</button>
+        <button class="ghost" data-action="abandon"><span class="ic-slot" data-icon="menu"></span>Menu</button>
+        <div id="hint">Drag across the spinning blank to cut. Aim nearer the centre to cut deeper, work down to the yellow line, then sand and oil.</div>
+        <button id="guideToggle" class="ghost"></button>
+        <button class="primary" id="finishBtn">Finish</button>
       </div>
-      <div id="rotateHint">↻ Rotate your device to landscape for the best carving view</div>
+      <div id="rotateHint">Turn your device sideways for the best view of the lathe</div>
     </section>
 
     <!-- RESULT -->
     <section class="screen" id="screen-result">
       <div class="panel result-panel">
-        <div class="result-stars" id="resultStars">☆☆☆☆☆</div>
-        <h2 id="resultTitle">Finished!</h2>
+        <div id="resultStars"></div>
+        <h2 id="resultTitle">Finished</h2>
         <div class="big-score"><span id="resultScore">0</span><small>/100</small></div>
         <div id="metricBars"></div>
         <div class="reward-row">
-          <span class="reward coins">🪙 <b id="rewardCoins">+0</b></span>
+          <span class="reward coins"><i class="coin"></i><b id="rewardCoins">+0</b></span>
           <span class="reward xp"><b id="rewardXp">+0</b> XP</span>
         </div>
         <div id="unlockNote"></div>
         <div class="result-buttons">
           <button class="ghost" data-action="menu">Menu</button>
-          <button class="ghost" id="retryBtn">↺ Retry</button>
-          <button class="primary" id="nextBtn">Next ▶</button>
+          <button class="ghost" id="retryBtn">Turn again</button>
+          <button class="primary" id="nextBtn">Next order</button>
         </div>
       </div>
     </section>
@@ -106,10 +109,10 @@
     <!-- SHOP -->
     <section class="screen" id="screen-shop">
       <div class="panel wide">
-        <div class="panel-head"><h2>Workshop Shop</h2><button class="ghost" data-action="menu">✕</button></div>
+        <div class="panel-head"><h2>Tool shop</h2><button class="ghost icon-btn" data-action="menu" aria-label="Close"></button></div>
         <div class="shop-tabs">
-          <button class="tab active" data-tab="tools">🔧 Tools</button>
-          <button class="tab" data-tab="woods">🪵 Woods</button>
+          <button class="tab active" data-tab="tools">Tools</button>
+          <button class="tab" data-tab="woods">Timber</button>
         </div>
         <div id="shopList" class="card-grid"></div>
       </div>
@@ -118,25 +121,25 @@
     <!-- HOW TO -->
     <section class="screen" id="screen-howto">
       <div class="panel">
-        <div class="panel-head"><h2>How to Play</h2><button class="ghost" data-action="menu">✕</button></div>
+        <div class="panel-head"><h2>How to play</h2><button class="ghost icon-btn" data-action="menu" aria-label="Close"></button></div>
         <ol class="howto">
-          <li><b>Mount a log.</b> Pick a contract and a wood, then start carving. The log spins on the lathe.</li>
-          <li><b>Carve to the yellow guide line.</b> The target outline is drawn on the blank. Drag across the spinning log to peel the wood down to it. The closer to the centreline you aim, the deeper you cut.</li>
-          <li><b>Pick the right tool.</b> A roughing gouge hogs bulk away; a parting tool cuts crisp grooves; a detail carver does fine work.</li>
-          <li><b>Don't overcut.</b> Cutting <i>below</i> the yellow line wastes wood and tanks your Material Use score — that's the skill (only the Rolling Pin tutorial stops you).</li>
-          <li><b>Sand it smooth.</b> Switch to the sanding block and run it over the whole piece for a glassy finish.</li>
-          <li><b>Finish &amp; score.</b> You're graded on shape, smoothness, symmetry, efficiency, finish and time. Earn coins and level up.</li>
+          <li><b>Mount a blank.</b> Pick an order and a timber. The blank spins on the lathe.</li>
+          <li><b>Cut to the yellow line.</b> The drawing is traced on the blank. Drag across it to peel the wood down. Aim nearer the centre to cut deeper.</li>
+          <li><b>Pick the right tool.</b> A roughing gouge hogs away bulk, a parting tool cuts crisp grooves, a detail carver does fine work.</li>
+          <li><b>Don't overcut.</b> Cutting below the line wastes wood and can't be undone. That's the skill (only the Rolling Pin order stops you).</li>
+          <li><b>Sand, then oil.</b> The sanding block smooths the piece; the oil brings out the grain and a soft shine.</li>
+          <li><b>Finish.</b> You're scored on shape, smoothness, symmetry, material use, finish and time.</li>
         </ol>
-        <p class="muted">Tip: short, light passes give you the most control. Relax — there's no failing, only carving.</p>
+        <p class="muted">Short, light passes give you the most control. There's no failing, only turning.</p>
       </div>
     </section>
 
     <div id="toast"></div>
-    <button id="audioToggle" title="Toggle sound">🔊</button>
-    <div id="buildtag">build v10</div>
-    <div id="loading">Warming up the lathe…</div>
+    <button id="audioToggle" title="Sound" aria-label="Sound"></button>
+    <div id="buildtag">build v11</div>
+    <div id="loading"><span>Warming up the lathe</span></div>
   </div>
 
-  <script type="module" src="js/main.js?v=10"></script>
+  <script type="module" src="js/main.js?v=11"></script>
 </body>
 </html>

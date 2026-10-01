@@ -4,3 +4,5 @@ node_modules/
 .vscode/
 .idea/
 Thumbs.db
+# local captures (before/after shots for review)
+screenshots/

@@ -9,7 +9,8 @@
 // deeper for grooves; wide tools take gentle bites.
 //
 // `power` scales removal rate. `kind` selects behaviour: 'cut' removes material
-// toward a target depth, 'sand' smooths the surface and raises the finish.
+// toward a target depth, 'sand' smooths the surface and raises the finish, 'oil'
+// wipes on a gloss coat (looks only; scoring ignores it).
 
 export const TOOLS = [
   {
@@ -75,6 +76,13 @@ export const TOOLS = [
     color: 0xf0e6c9, cost: 3000, unlockLevel: 12,
     icon: '⊞', desc: 'Powered sander: covers the whole piece in seconds.',
     smoothing: 9.0, grit: 0.85,
+    shapeOffset: (d, hw) => 0,
+  },
+  {
+    id: 'oil', name: 'Finishing Oil', kind: 'oil',
+    halfWidth: 0.12, power: 1.0, precision: 0.5,
+    color: 0xc98f3e, cost: 0, unlockLevel: 1,
+    icon: '◍', desc: 'Wipe on a coat of oil to deepen the colour and bring up a gloss.',
     shapeOffset: (d, hw) => 0,
   },
 ];

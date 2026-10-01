@@ -29,7 +29,8 @@ Works on desktop and mobile. Best with sound on.
    cuts crisp grooves, a detail carver does fine work.
 4. **Don't overcut.** Cutting *below* the green line wastes wood and can't be
    undone — that's the skill.
-5. **Sand it smooth** with the sanding block for a high finish score.
+5. **Sand it smooth** with the sanding block for a high finish score, then
+   **wipe on oil** to bring out the grain and a soft gloss.
 6. **Finish & get scored** on shape, smoothness, symmetry, efficiency, finishing
    and time. Earn coins, level up, and unlock new tools, woods and harder orders.
 
@@ -53,7 +54,17 @@ Progress (coins, level, unlocks) is saved to your browser via `localStorage`.
 - 🎮 **Game modes**: Career, Workshop (free carve), and a deterministic Daily Order.
 - 🔊 **Fully synthesised audio** (WebAudio) — carving scrape, sanding swish,
   lathe drone and a completion chime. No audio assets needed.
-- ✨ Wood-shaving particles, warm workshop lighting, clean responsive UI.
+- ✨ **Real-looking wood**: a procedural solid-wood shader whose growth rings and
+  fibres follow the turned shape (cut faces show their rings), with per-species
+  figure (sapwood, pores, spalt lines) and a finish that goes from fuzzy fresh-cut
+  to satin (sanded) to glossy (oiled).
+- A bench lathe with drive spur, live centre and a tool rest that slides with the
+  tool; the chisel you pick sits on the rest and meets the wood where you cut.
+  Shavings fly off and settle on the bed; sanding raises dust.
+- A calm workshop: painted board wall with window light, a shelf of finished
+  pieces, a pendant lamp, image-based reflections, soft shadows, AgX tone mapping.
+- Paper-and-pencil UI: order cards drawn as each piece's profile, a live
+  profile drawing while you turn.
 
 ## Run locally
 
@@ -73,12 +84,15 @@ python3 -m http.server 8000
 index.html          # shell, UI, Three.js import map
 css/style.css        # all styling
 js/
-  main.js            # scene, render loop, carving input, UI flow
+  main.js            # scene, camera shots, render loop, carving input, UI flow
   lathe.js           # the Log: surface-of-revolution model + live mesh
+  woodshader.js      # procedural solid-wood material (grain, rings, finish)
+  workshop.js        # lathe, bench, wall, lamp, lighting + reflections, hand tools
+  icons.js           # line icons for tools and UI
   tools.js woods.js  # tool & wood definitions and tuning
   orders.js          # target-shape profiles for every order
   scoring.js         # the six scoring metrics + rewards
-  particles.js       # wood-shaving pool
+  particles.js       # shavings (instanced) + sanding dust
   audio.js           # synthesised sound engine
   ui.js save.js config.js
 DESIGN.md            # full game design document (96 objects, formulas, economy…)
@@ -89,7 +103,13 @@ DESIGN.md            # full game design document (96 objects, formulas, economy�
 - **Three.js r160** via CDN import map (no bundler).
 - Custom `BufferGeometry` lathe mesh with analytic normals, updated per-frame
   only over the dirty range for performance.
-- WebAudio synthesis, Canvas-generated wood-grain texture, `localStorage` saves.
+- Wood is shaded procedurally in object space (no textures), so the grain
+  stays put on the spinning log and follows every cut.
+- Pixel ratio is capped at 1.5x and steps down automatically when frames run
+  slower than about 54 fps.
+- WebAudio synthesis, `localStorage` saves.
+- `?dev` in the URL exposes `window.WF` (scene, camera, log, a few actions) for
+  automated screenshots and frame-time checks.
 
 ## Roadmap
 
